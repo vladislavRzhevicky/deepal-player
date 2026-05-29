@@ -39,6 +39,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Read-only диагностический пробник: пишет в logcat что видно через
+        // StorageManager.getStorageVolumes() и слушает MEDIA_MOUNTED. Не
+        // влияет на работу USB-стека. Удалить когда гипотеза подтверждена.
+        StorageVolumeProbe.start(applicationContext)
         CastListenerService.start(this)
         usb = UsbBrowser(this)
 
