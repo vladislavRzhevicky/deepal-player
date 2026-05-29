@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Match USB Mass Storage class (8). При подключении флешки эту
+         категории Android matchedит и автоматически дает permission
+         нашему UsbPickerActivity. -->
+    <usb-device class="8" />
+    <!-- Также матчим все, потому что некоторые контроллеры классифицируются
+         на уровне interface, не device. -->
+    <usb-device />
+</resources>

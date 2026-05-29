@@ -1,0 +1,14 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+# release-keystore — самоподписной, лежит локально; не в репо
+release.keystore
+**/release.keystore
