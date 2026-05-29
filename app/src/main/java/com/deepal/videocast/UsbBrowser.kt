@@ -147,6 +147,7 @@ class UsbBrowser(private val activity: Activity) {
             // kernel-driver сам и не воюет с Cockpit vold.
             val backends = listOf("android" to ::useAndroidBackend, "libusb" to ::useLibusbBackend)
             var lastError: Throwable? = null
+            var sawNoPartitions = false
             for ((tag2, switchBackend) in backends) {
                 try {
                     switchBackend()
@@ -155,6 +156,15 @@ class UsbBrowser(private val activity: Activity) {
                     val msd = msds.firstOrNull { it.usbDevice.deviceName == rawDevice.deviceName }
                         ?: throw IllegalStateException("MSD не найден")
                     msd.init()
+                    // libaums поддерживает только FAT12/16/32 и exFAT, и только
+                    // MBR partition table. NTFS / ext4 / APFS / GPT → partitions
+                    // приходят пустые. Раньше тут летел IndexOutOfBoundsException
+                    // на partitions[0]; теперь объясняем причину человеку.
+                    if (msd.partitions.isEmpty()) {
+                        sawNoPartitions = true
+                        runCatching { msd.close() }
+                        throw IllegalStateException("Файловая система не FAT32/exFAT")
+                    }
                     device = msd
                     val partition = msd.partitions[0]
                     val filesystem = partition.fileSystem
@@ -179,10 +189,17 @@ class UsbBrowser(private val activity: Activity) {
             Log.e(tag, "all backends failed", lastError)
             activity.runOnUiThread {
                 val e = lastError
-                val hint = if (e is java.io.IOException || e?.message?.contains("EIO", true) == true)
-                    " — перевоткни флешку"
-                else ""
-                status = "init упал: ${e?.javaClass?.simpleName}: ${e?.message ?: "—"}$hint"
+                status = when {
+                    sawNoPartitions ->
+                        "Флешка не FAT32/exFAT. Переформатируй её " +
+                        "(Windows: «Этот компьютер» → правой кнопкой по флешке → " +
+                        "Форматировать → exFAT)."
+                    e is java.io.IOException || e?.message?.contains("EIO", true) == true ->
+                        "init упал: ${e?.javaClass?.simpleName}: ${e?.message ?: "—"} " +
+                        "— перевоткни флешку"
+                    else ->
+                        "init упал: ${e?.javaClass?.simpleName}: ${e?.message ?: "—"}"
+                }
                 mounted = false
             }
         }
