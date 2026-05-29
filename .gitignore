@@ -12,3 +12,7 @@ captures/
 # release-keystore — самоподписной, лежит локально; не в репо
 release.keystore
 **/release.keystore
+# Локальные prompt'ы для следующих сессий — содержат install-команды,
+# broker-references и прочее что в публичный репо не уезжает.
+NEXT_SESSION_PROMPT.md
+NEXT_*_PROMPT.md
